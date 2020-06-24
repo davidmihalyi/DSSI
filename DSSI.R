@@ -167,3 +167,40 @@ ggplot(plot3, aes(reorder(lend_2,-serv2020_to_stock2018), serv2020_to_stock2018,
 
 
 ggsave(file="3-DSSI_share_2020_due.png")
+
+
+plot4<-clean_df2 %>% 
+  rename_at(vars(starts_with('DebtServiceDue')), funs(sub('DebtServiceDue20', 'DSD20', .))) %>% 
+  gather(year2, value, DOD2014:DSD2024, factor_key=TRUE) %>% 
+  mutate(year=substr(year2, 4, 7)) %>% 
+  group_by(year, year2) %>% 
+  summarise(ChinaSum= sum(value[lending_agency == "China"]), 
+            BondSum= sum(value[lending_agency == "Total Bondholders"]),
+            MultiSum= sum(value[lending_agency == "Total Official multilateral"]),
+            TotalSum= sum(value[lending_agency == "Total"])) %>% 
+  mutate(China_to_Total=round(ChinaSum/TotalSum,3)) %>% 
+  mutate(Bond_to_Total=round(BondSum/TotalSum,3)) %>% 
+  mutate(Multi_to_Total=round(MultiSum/TotalSum,3)) %>% 
+  mutate(Other_to_Total=1-Multi_to_Total-China_to_Total-Bond_to_Total) %>% 
+  select(-ChinaSum,-BondSum,-MultiSum,-TotalSum) %>%
+  gather(group, value, China_to_Total:Other_to_Total, factor_key=TRUE) 
+
+
+ 
+
+ggplot(plot4, aes(year2, value, fill=factor(group))) +
+  geom_bar(position="fill", stat="identity")  +
+  scale_fill_discrete(name = "Lender", labels=c("China", "Bondholders", "Multilaterals", "Other bilateral and non-official")) +
+  scale_y_continuous(labels = scales::percent) +
+  geom_text(aes(label = paste0(value*100,"%")), 
+            position = position_stack(vjust = 0.5), size = 3)+
+  ylab("Share of lenders in \n total outstanding debt  and debt service due") +
+  xlab("2014-18: Disbursed and Outstanding Debt \n 2019-24: Debt Service Due")+
+  theme(axis.text.x = element_text(angle=45, hjust=1))+
+  labs(title=("Share of total debt stock/service per lender group"), 
+       subtitle=("Total across the 72 eligible countries to 2020 Debt Service Suspension Initiative (DSSI)"),
+       caption = paste0("All figures are  estimates from WB IDS DSSI.\n By: @davidmihalyi")) 
+  
+  
+
+ggsave(file="4-China-Share.png")
