@@ -77,7 +77,7 @@ library(ggplot2)
 ###Plot 1
 
 plot1<-clean_df2 %>% 
-  select(iso3c,country, region, lender_type,lending_agency,sum_row, DebtServiceDue2020, GDP_Nom_WB_latest_usd) %>% 
+  select(iso3c,country, region, lender_type,lending_agency,sum_row, DebtServiceDue2020, GDP_Nom_WB_latest_Kusd) %>% 
   group_by(iso3c, country, region) %>% 
   summarise(DSD2020China= sum(DebtServiceDue2020[lending_agency == "China"]), 
             DSD2020Bond= sum(DebtServiceDue2020[lending_agency == "Total Bondholders"]),
@@ -104,13 +104,13 @@ ggplot(plot1, aes(DSD2020Bond_Total,DSD2020China_Total, color=factor(region))) +
   ylab("China - Official+Non-official (%)") + 
   geom_text_repel(data = subset(plot1,  DSD2020Bond_Total>0.33 | DSD2020China_Total>0.33), aes(DSD2020Bond_Total,DSD2020China_Total, label = country))
 
-ggsave(file="DSSI_2020_servicing.png")
+ggsave(file="1-DSSI_2020_servicing.png")
 
 
 ###Plot 2
 
 plot2<-clean_df2 %>% 
-  select(iso3c,country, region, lender_type,lending_agency,sum_row, DebtServiceDue2020, GDP_Nom_WB_latest_usd) %>% 
+  select(iso3c,country, region, lender_type,lending_agency,sum_row, DebtServiceDue2020, GDP_Nom_WB_latest_Kusd) %>% 
   filter(sum_row==0) %>% 
   group_by(lender_type, lending_agency) %>% 
   summarise(DSD2020_lender= sum(DebtServiceDue2020)) %>% 
@@ -132,6 +132,38 @@ ggplot(plot2, aes(reorder(lend_2,-DSD2020_lender), DSD2020_lender, fill=factor(l
   ylab("2020 Debt Service Due from DSSI countries  ($m)") 
 
 
-ggsave(file="DSSI_2020_creditors.png")
+ggsave(file="2-DSSI_2020_creditors.png")
 
 
+
+###Plot 3
+
+plot3<-clean_df2 %>% 
+  select(iso3c,country, region, lender_type,lending_agency,sum_row, DOD2018,  DebtServiceDue2021,DebtServiceDue2020,  DebtServiceDue2019, GDP_Nom_WB_latest_Kusd) %>% 
+  filter(sum_row==0) %>% 
+  group_by(lender_type, lending_agency) %>% 
+  summarise(DSD2021_lender= sum(DebtServiceDue2021),
+            DSD2020_lender= sum(DebtServiceDue2020),
+            DSD2019_lender= sum(DebtServiceDue2019), 
+            DOD2018_lender= sum(DOD2018)) %>% 
+  mutate(serv2019_to_stock2018=(DSD2019_lender/DOD2018_lender)) %>% 
+  mutate(serv2020_to_stock2018=(DSD2020_lender/DOD2018_lender)) %>% 
+   mutate(serv2021_to_stock2018=(DSD2021_lender/DOD2018_lender)) %>% 
+  filter(DOD2018_lender>10^6) %>% 
+  mutate(lend_2=paste0(as.character(lender_type)," ", as.character(lending_agency))) %>% 
+  arrange(-serv2020_to_stock2018)
+
+ggplot(plot3, aes(reorder(lend_2,-serv2020_to_stock2018), serv2020_to_stock2018, fill=factor(lender_type))) +
+  geom_col()  +
+  scale_fill_discrete(name = "Lender type")+
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits=c(0,0.5))+
+  scale_x_discrete(breaks=plot3$lend_2, labels=plot3$lending_agency)+
+  labs(title=("Debt service due in 2020 as % of 2018 debt stock lent"), 
+       subtitle=("Total across the 72 eligible countries to 2020 Debt Service Suspension Initiative (DSSI)"),
+       caption = paste0("All figures are  estimates by WB of debt service due by lender in 2020 in USD \n Data source: WB International Debt Statistics DSSI Data.\n By: @davidmihalyi")) + 
+  xlab("Creditors with 2018 debt stocks of over $1 billion in 2018") +
+  theme(axis.text.x = element_text(angle=45, hjust=1)) + 
+  ylab("Debt Service due in 2020 \n as % of 2018 debt stock lent outstandin") 
+
+
+ggsave(file="3-DSSI_share_2020_due.png")
