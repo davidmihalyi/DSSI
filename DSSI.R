@@ -158,12 +158,12 @@ ggplot(plot3, aes(reorder(lend_2,-serv2020_to_stock2018), serv2020_to_stock2018,
   scale_fill_discrete(name = "Lender type")+
   scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits=c(0,0.5))+
   scale_x_discrete(breaks=plot3$lend_2, labels=plot3$lending_agency)+
-  labs(title=("Debt service due in 2020 as % of 2018 debt stock lent"), 
+  labs(title=("Debt service due in 2020 as % of 2018 loan stock outstanding"), 
        subtitle=("Total across the 72 eligible countries to 2020 Debt Service Suspension Initiative (DSSI)"),
        caption = paste0("All figures are  estimates by WB of debt service due by lender in 2020 in USD \n Data source: WB International Debt Statistics DSSI Data.\n By: @davidmihalyi")) + 
   xlab("Creditors with 2018 debt stocks of over $1 billion in 2018") +
   theme(axis.text.x = element_text(angle=45, hjust=1)) + 
-  ylab("Debt Service due in 2020 \n as % of 2018 debt stock lent outstandin") 
+  ylab("Debt service due in 2020 \n as % of 2018 debt stock lent and outstanding") 
 
 
 ggsave(file="3-DSSI_share_2020_due.png")
